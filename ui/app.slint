@@ -1,0 +1,23 @@
+import { VerticalBox , HorizontalBox, Button} from "std-widgets.slint";
+import { BorderlessWindow } from "borderless-window.slint";
+
+export component Main inherits BorderlessWindow {
+    title: "😀你好，Slint！";
+    preferred-width: 480px;
+    preferred-height: 320px;
+
+    callback close-window();
+    callback move-window(length, length);
+
+    close => {
+        close-window();
+    }
+
+    move(offset-x, offset-y) => {
+        move-window(offset-x, offset-y);
+    }
+    Text {
+        color: #2a2a2a;
+        text: "Hello World!";
+    }
+}
