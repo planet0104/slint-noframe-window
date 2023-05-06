@@ -34,9 +34,7 @@ export component BorderlessWindow inherits Window{
     function drag-area-mouse-move(idx: int, x: length, y: length) {
         //拖动窗口
         if (idx == 0){
-            if(x != drag-area-down-x && y != drag-area-down-y){
-                move(x - drag-area-down-x, y - drag-area-down-y);
-            }
+            move(x - drag-area-down-x, y - drag-area-down-y);
         }else if (idx == 1){
             //上边框
             move(0, y - drag-area-down-y);
