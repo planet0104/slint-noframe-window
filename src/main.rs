@@ -6,14 +6,24 @@ slint::include_modules!();
 fn main() -> Result<()> {
     let main = Main::new()?;
 
-    let hanel1 = main.as_weak();
+    let handel = main.as_weak();
     main.on_close_window(move ||{
-        hanel1.upgrade().unwrap().hide().unwrap();
+        handel.upgrade().unwrap().hide().unwrap();
     });
 
-    let handle2 = main.as_weak();
+    let handel = main.as_weak();
+    main.on_minimized_window(move |enable|{
+        handel.upgrade().unwrap().window().set_minimized(enable);
+    });
+
+    let handel = main.as_weak();
+    main.on_maximized_window(move |enable|{
+        handel.upgrade().unwrap().window().set_maximized(enable);
+    });
+
+    let handel = main.as_weak();
     main.on_move_window(move |offset_x, offset_y|{
-        let main = handle2.upgrade().unwrap();
+        let main = handel.upgrade().unwrap();
         let logical_pos = main.window().position().to_logical(main.window().scale_factor());
         main.window().set_position(LogicalPosition::new(logical_pos.x + offset_x, logical_pos.y + offset_y));
     });

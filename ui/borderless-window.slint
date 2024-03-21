@@ -14,9 +14,13 @@ export component BorderlessWindow inherits Window{
     property <bool> drag-area-pressed: false;
     property <length> drag-area-down-x: 0;
     property <length> drag-area-down-y: 0;
+
+    property <bool> is-maximized: false;
     
-    callback close();
-    callback move(length, length);
+    callback on-close-window();
+    callback on-move-window(length, length);
+    callback on-minimized-window(bool);
+    callback on-maximized-window(bool);
 
     function resize-window(width: length, height: length) {
         if(width < root.min-width){
@@ -31,46 +35,53 @@ export component BorderlessWindow inherits Window{
         }
     }
 
-    function drag-area-mouse-move(idx: int, x: length, y: length) {
-        //拖动窗口
-        if (idx == 0){
-            move(x - drag-area-down-x, y - drag-area-down-y);
-        }else if (idx == 1){
-            //上边框
-            move(0, y - drag-area-down-y);
-            resize-window(0, root.height - (y - drag-area-down-y));
-        }else if (idx == 2){
-            //右边框
-            resize-window(root.width + (x - drag-area-down-x), root.height);
-        }else if (idx == 3){
-            //下边框
-            resize-window(root.width, root.height + (y - drag-area-down-y));
-        }else if (idx == 4){
-            //左边框
-            move(x - drag-area-down-x, 0);
-            resize-window(root.width - (x - drag-area-down-x), root.height);
-        }else if (idx == 5){
-            //左上角
-            move(x - drag-area-down-x, y - drag-area-down-y);
-            resize-window(root.width - (x - drag-area-down-x), root.height - (y - drag-area-down-y));
-        }else if (idx == 6){
-            //右上角
-            move(0, y - drag-area-down-y);
-            resize-window(root.width + (x - drag-area-down-x), root.height - (y - drag-area-down-y));
-        }else if (idx == 7){
-            //右下角
-            resize-window(root.width + (x - drag-area-down-x), root.height + (y - drag-area-down-y));
-        }else if (idx == 8){
-            //左下角
-            move(x - drag-area-down-x, 0);
-            resize-window(root.width - (x - drag-area-down-x), root.height + (y - drag-area-down-y));
+    function process-drag-event(idx: int, ev: PointerEvent, x: length, y: length) {
+        if(ev.kind == PointerEventKind.down){
+            drag-area-down-x = x;
+            drag-area-down-y = y;
+            drag-area-pressed = true;
         }
-    }
-
-    function drag-area-mouse-event(idx: int, ev: PointerEvent, x: length, y: length) {
-        drag-area-pressed = ev.kind == PointerEventKind.down;
-        drag-area-down-x = x;
-        drag-area-down-y = y;
+        if(ev.kind == PointerEventKind.move){
+            if(!drag-area-pressed){
+                return;
+            }
+            //拖动窗口
+            if (idx == 0){
+                on-move-window(x - drag-area-down-x, y - drag-area-down-y);
+            }else if (idx == 1){
+                //上边框
+                on-move-window(0, y - drag-area-down-y);
+                resize-window(root.width, root.height - (y - drag-area-down-y));
+            }else if (idx == 2){
+                //右边框
+                resize-window(root.width + (x - drag-area-down-x), root.height);
+            }else if (idx == 3){
+                //下边框
+                resize-window(root.width, root.height + (y - drag-area-down-y));
+            }else if (idx == 4){
+                //左边框
+                on-move-window(x - drag-area-down-x, 0);
+                resize-window(root.width - (x - drag-area-down-x), root.height);
+            }else if (idx == 5){
+                //左上角
+                on-move-window(x - drag-area-down-x, y - drag-area-down-y);
+                resize-window(root.width - (x - drag-area-down-x), root.height - (y - drag-area-down-y));
+            }else if (idx == 6){
+                //右上角
+                on-move-window(0, y - drag-area-down-y);
+                resize-window(root.width + (x - drag-area-down-x), root.height - (y - drag-area-down-y));
+            }else if (idx == 7){
+                //右下角
+                resize-window(root.width + (x - drag-area-down-x), root.height + (y - drag-area-down-y));
+            }else if (idx == 8){
+                //左下角
+                on-move-window(x - drag-area-down-x, 0);
+                resize-window(root.width - (x - drag-area-down-x), root.height + (y - drag-area-down-y));
+            }
+        }
+        if(ev.kind == PointerEventKind.up || ev.kind == PointerEventKind.up){
+            drag-area-pressed = false;
+        }
     }
 
     // 上边框点击区域
@@ -80,11 +91,8 @@ export component BorderlessWindow inherits Window{
         height: root.border-width;
         x: 0;
         y: 0;
-        moved => {
-            drag-area-mouse-move(1, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(1, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(1, ev, self.mouse-x, self.mouse-y);
         }
     }
     
@@ -95,11 +103,8 @@ export component BorderlessWindow inherits Window{
         height: 100%;
         x: root.width - root.border-width;
         y: 0;
-        moved => {
-            drag-area-mouse-move(2, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(2, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(2, ev, self.mouse-x, self.mouse-y);
         }
     }
 
@@ -110,11 +115,8 @@ export component BorderlessWindow inherits Window{
         height: root.border-width;
         x: 0;
         y: root.height - root.border-width;
-        moved => {
-            drag-area-mouse-move(3, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(3, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(3, ev, self.mouse-x, self.mouse-y);
         }
     }
 
@@ -125,11 +127,8 @@ export component BorderlessWindow inherits Window{
         height: 100%;
         x: 0;
         y: 0;
-        moved => {
-            drag-area-mouse-move(4, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(4, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(4, ev, self.mouse-x, self.mouse-y);
         }
     }
 
@@ -140,11 +139,8 @@ export component BorderlessWindow inherits Window{
         height: root.border-width;
         x: 0;
         y: 0;
-        moved => {
-            drag-area-mouse-move(5, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(5, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(5, ev, self.mouse-x, self.mouse-y);
         }
     }
     // 右上角点击区域
@@ -154,11 +150,8 @@ export component BorderlessWindow inherits Window{
         height: root.border-width;
         x: root.width - root.border-width;
         y: 0;
-        moved => {
-            drag-area-mouse-move(6, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(6, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(6, ev, self.mouse-x, self.mouse-y);
         }
     }
     //右下角点击区域
@@ -168,11 +161,8 @@ export component BorderlessWindow inherits Window{
         height: root.border-width;
         x: root.width - root.border-width;
         y: root.height - root.border-width;
-        moved => {
-            drag-area-mouse-move(7, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(7, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(7, ev, self.mouse-x, self.mouse-y);
         }
     }
     //左下角点击区域
@@ -182,11 +172,8 @@ export component BorderlessWindow inherits Window{
         height: root.border-width;
         x: 0;
         y: root.height - root.border-width;
-        moved => {
-            drag-area-mouse-move(8, self.mouse-x, self.mouse-y);
-        }
         pointer-event(ev) => {
-            drag-area-mouse-event(8, ev, self.mouse-x, self.mouse-y);
+            process-drag-event(8, ev, self.mouse-x, self.mouse-y);
         }
     }
 
@@ -205,13 +192,49 @@ export component BorderlessWindow inherits Window{
                     color: title-text-color;
                     vertical-alignment: center;
                     TouchArea {
-                        moved => {
-                            drag-area-mouse-move(0, self.mouse-x, self.mouse-y);
-                        }
                         pointer-event(ev) => {
-                            drag-area-mouse-event(0, ev, self.mouse-x, self.mouse-y);
+                            process-drag-event(0, ev, self.mouse-x, self.mouse-y);
                         }
                     }
+                }
+                //最小化按钮
+                Rectangle {
+                    Rectangle {
+                        y: 7px;
+                        border-radius: 3px;
+                        width: 14px;
+                        height: 14px;
+                        background: root.border-color;
+                        touch-minize := TouchArea {
+                            clicked => { on-minimized-window(true) }
+                        }
+                        Text {
+                            color: touch-minize.has-hover? touch-minize.pressed? gray: title-text-color : lightgray;
+                            text: "-";
+                        }
+                    }
+                    width: 20px;
+                }
+                //最大化按钮
+                Rectangle {
+                    Rectangle {
+                        y: 7px;
+                        border-radius: 3px;
+                        width: 14px;
+                        height: 14px;
+                        background: root.border-color;
+                        touch-maximized := TouchArea {
+                            clicked => {
+                                is-maximized = !is-maximized;
+                                on-maximized-window(is-maximized);
+                            }
+                        }
+                        Text {
+                            color: touch-maximized.has-hover? touch-maximized.pressed? gray: title-text-color : lightgray;
+                            text: is-maximized?"❐":"□";
+                        }
+                    }
+                    width: 20px;
                 }
                 //关闭按钮
                 Rectangle {
@@ -220,11 +243,11 @@ export component BorderlessWindow inherits Window{
                     width: 14px;
                     height: 14px;
                     background: root.border-color;
-                    touch := TouchArea {
-                        clicked => { close() }
+                    touch-close := TouchArea {
+                        clicked => { on-close-window() }
                     }
                     Text {
-                        color: touch.has-hover? touch.pressed? gray: title-text-color : lightgray;
+                        color: touch-close.has-hover? touch-close.pressed? gray: title-text-color : lightgray;
                         text: "×";
                     }
                 }

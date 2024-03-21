@@ -7,15 +7,29 @@ export component Main inherits BorderlessWindow {
     preferred-height: 320px;
 
     callback close-window();
+    callback minimized-window(bool);
+    callback maximized-window(bool);
     callback move-window(length, length);
+    callback mouse-down(int, int);
+    callback mouse-move(int, int);
 
-    close => {
+    on-close-window() => {
         close-window();
     }
 
-    move(offset-x, offset-y) => {
+    on-minimized-window(enable) => {
+        minimized-window(enable);
+    }
+
+    on-maximized-window(enable) => {
+        maximized-window(enable);
+    }
+
+    on-move-window(offset-x, offset-y) => {
         move-window(offset-x, offset-y);
     }
+    
+
     Text {
         color: #2a2a2a;
         text: "Hello World!";
